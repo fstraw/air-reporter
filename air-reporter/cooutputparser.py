@@ -7,8 +7,6 @@ Created on Thu Jan 29 13:11:38 2015
 import os, docx
 from docx.shared import Inches
 
-#txt = r"\\epe-server5\users2\Shared\JOBS\KHA\KHA1502\Air\CO\Existing2010.out"
-#workspace = r"C:\Users\bbatt\Dropbox\!Python\AirReporting_Home"
 #existingout = os.path.join(workspace,"Existing.out")
 #nobuildout = os.path.join(workspace,"NoBuild.out")
 #buildout =  os.path.join(workspace,"Build.out")
