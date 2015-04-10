@@ -134,7 +134,7 @@ def executivesummary(document):
     if boolCOReq == True:
     	p.add_run("""The highest 1-hour CO concentration of %s ppm in the %s design year is projected at receptor %s, located in the %s quadrant of the studied intersection. This value is lower than the maximum allowable NAAQS for the one-hour level of 35 ppm and the 8-hour level of 9 ppm.""" % (strCOBuild, strDesignYear, strMaxReceptorBuild, strReceptorQuadrant))
     else:
-    	p.add_run('The project was evaluated for the potential to result in increased CO concentrations in the project area. Based on LOS estimates, it has been determined that this project would not increase traffic congestion, increase idle emissions, or CO concentrations.')
+    	p.add_run("""The project was evaluated for the potential to result in increased CO concentrations in the project area. Based on LOS estimates, it has been determined that this project would not increase traffic congestion, increase idle emissions, or CO concentrations.""")
     
     p = document.add_paragraph()
     p.style = "NoSpacing"
@@ -156,27 +156,27 @@ def executivesummary(document):
     table.style="TableGrid"
     
     hdr_cells = table.rows[0].cells
-    hdr_cells[0].text = 'Prepared By: ' + preparedBy
-    hdr_cells[1].text = 'QC/QA: ' + qcBy
+    hdr_cells[0].text = 'Prepared By: %s' % (preparedBy)
+    hdr_cells[1].text = 'QC/QA: %s' % (qcBy)
     hdr_cells = table.rows[1].cells
-    hdr_cells[0].text = '                                                   '
-    hdr_cells[1].text = '                                                   '
+    hdr_cells[0].text = ' ' * 50
+    hdr_cells[1].text = ' ' * 50
     hdr_cells = table.rows[2].cells
-    hdr_cells[0].text = '_____________________________________				'
-    hdr_cells[1].text = '_____________________________________'
+    hdr_cells[0].text = '_' * 40
+    hdr_cells[1].text = '_' * 40
     hdr_cells = table.rows[3].cells
-    hdr_cells[0].text = 'Signature                               Date'
-    hdr_cells[1].text = 'Signature                               Date'
+    hdr_cells[0].text = 'Signature' + ' ' * 50 + 'Date'
+    hdr_cells[1].text = 'Signature' + ' ' * 50 + 'Date'
     hdr_cells = table.rows[4].cells
-    hdr_cells[0].text = '                                                   '
-    hdr_cells[1].text = '                                                   '
+    hdr_cells[0].text = ' ' * 50
+    hdr_cells[1].text = ' ' * 50
     hdr_cells = table.rows[5].cells
-    hdr_cells[0].text = '_____________________________________				'
-    hdr_cells[1].text = '                                                   '
+    hdr_cells[0].text = '_' * 40
+    hdr_cells[1].text = ' ' * 50
     hdr_cells = table.rows[6].cells
-    hdr_cells[0].text = 'Approved By: GDOT                                  '
+    hdr_cells[0].text = 'Approved By: GDOT' + ' ' * 35
     hdr_cells = table.rows[7].cells
-    hdr_cells[0].text = 'Signature                               Date'
+    hdr_cells[0].text = 'Signature' + ' ' * 50 + 'Date'
 
 # document.add_page_break()
 def reportbody(document):
@@ -404,7 +404,7 @@ def reportbody(document):
     	
     	#Add attachment info
     	p = document.add_paragraph()
-    	p.add_run("""The emission factors used in the CO microscale model were based off of GDOT Rate Tables using the EPA's Motor Vehicle Emission Simulator (MOVES). Emission levels were calculated per site specific criteria, including road grade (0 percent), vehicle mix (%s passenger cars; %s heavy trucks; %s medium trucks), design year (%s), road type (%s), and speed limit (%s). All emissions factors were based on temperatures under 70 degrees in the %s. See attachment X for emission factor worksheets.""" % (strAuto, strHeavy, strMedium, strDesignYear, strRoadType, strSpeedLimitRange, strRegion))
+    	p.add_run("""The emission factors used in the CO microscale model were based off of GDOT Rate Tables using the EPA's Motor Vehicle Emission Simulator (MOVES). Emission levels were calculated per site specific criteria, including road grade (0 percent), vehicle mix (%s passenger cars; %s heavy trucks; %s medium trucks), design year (%s), road type (%s), and speed limit (%s). All emissions factors were based on temperatures under 70 degrees in the %s. See Attachment X for emission factor worksheets.""" % (strAuto, strHeavy, strMedium, strDesignYear, strRoadType, strSpeedLimitRange, strRegion))
     	
     	p = document.add_paragraph()
     	p.add_run("""Meteorological inputs to the CAL3QHC model were those that would give the worst-case CO concentrations. The wind angle to the roadway was modeled at 10 degree intervals with a wind speed of one meter per second. In general, atmospheric stability is a function of the temperature distribution with height, solar radiation, cloud cover, and wind speed. Stability is identified by six classes ranging from A (very unstable) to F (very stable). A Stability Class %s was used for this project. Stable atmospheres contain little turbulence in which pollutant concentrations are high.""" % (strStabilityClass))
@@ -414,7 +414,7 @@ def reportbody(document):
     	
     	#Add attachment info
     	p = document.add_paragraph()
-    	p.add_run("""The background concentration is usually defined as the concentration immediately upwind of the source. Through an agreement with the Georgia EPA, background CO concentration is considered to be only a small portion of the total input to the micro scale analysis. A background concentration of 1 ppm is added for rural areas, 2 ppm for suburban areas, and 3 ppm for urban areas. A background concentration of %s ppm has been added to the air quality dispersion modeling results. The intersection %s was analyzed for the %s build and no-build alternatives. See attachment X for CO inputs.""" % (strBackgroundConc, strIntersection, strDesignYear))
+    	p.add_run("""The background concentration is usually defined as the concentration immediately upwind of the source. Through an agreement with the Georgia EPA, background CO concentration is considered to be only a small portion of the total input to the micro scale analysis. A background concentration of 1 ppm is added for rural areas, 2 ppm for suburban areas, and 3 ppm for urban areas. A background concentration of %s ppm has been added to the air quality dispersion modeling results. The intersection %s was analyzed for the %s build and no-build alternatives. See Attachment X for CO inputs.""" % (strBackgroundConc, strIntersection, strDesignYear))
     		
     	p = document.add_paragraph()
     	p.add_run('Receptor locations were identified to perform pollutant calculations. There were %s receptors chosen in the no-build conditions and %s receptors were chosen in the build condition. These locations were chosen because they represent the closest location where the public is likely to be present. Due to their proximity to the signal controlled intersection, these receptors would provide the highest concentrations of CO from the operations of the roadways.' % (strBuildRec, strNoBuildRec))
@@ -476,10 +476,10 @@ def reportbody(document):
     	p = document.add_paragraph()
     	p.add_run('Sensitive receptors, defined as hospitals, nursing homes, schools, and other institutional facilities, were also considered as a part of this study. No facilities of these types are located proximate to the studied intersection; therefore, no special considerations were made for sensitive receptors.')
     	
-    	#Add Appendix Data
+    	#Add Attachment Data
     	document.add_heading('CO Microscale Model Summary of Results', 4)
     	p = document.add_paragraph()
-    	p.add_run("""The State of Georgia and the EPA have set the maximum acceptable average CO concentrations at 35 ppm for a one-hour period, and 9 ppm for a continuous eight-hour period. The peak one-hour concentrations for %s build and no-build were predicted and are listed below in Table 4: Predicted Highest One-Hour CO concentrations (ppm). A copy of the model run data input and outputs are included in Appendix X. The highest 1-hour CO concentration of %s in the %s design year is projected at receptor %s, located in the %s quadrant of the studied intersection. This value is lower than the maximum allowable NAAQS for the one-hour level of 35 ppm and the eight-hour level of 9 ppm. Since the highest one hour concentration is lower than both the one hour and eight hour standards, an eight hour concentration was not calculated. (Note eight-hour concentrations are calculated by multiplying the CAL3QHC results by a persistent factor of 0.6 and adding the background concentration to the results.)""" % (strDesignYear, strCOBuild, strDesignYear, strMaxReceptorBuild, strReceptorQuadrant))
+    	p.add_run("""The State of Georgia and the EPA have set the maximum acceptable average CO concentrations at 35 ppm for a one-hour period, and 9 ppm for a continuous eight-hour period. The peak one-hour concentrations for %s build and no-build were predicted and are listed below in Table 4: Predicted Highest One-Hour CO concentrations (ppm). A copy of the model run data input and outputs are included in Attachment X. The highest 1-hour CO concentration of %s in the %s design year is projected at receptor %s, located in the %s quadrant of the studied intersection. This value is lower than the maximum allowable NAAQS for the one-hour level of 35 ppm and the eight-hour level of 9 ppm. Since the highest one hour concentration is lower than both the one hour and eight hour standards, an eight hour concentration was not calculated. (Note eight-hour concentrations are calculated by multiplying the CAL3QHC results by a persistent factor of 0.6 and adding the background concentration to the results.)""" % (strDesignYear, strCOBuild, strDesignYear, strMaxReceptorBuild, strReceptorQuadrant))
     	
     	'''Insert CO Graphics'''
     	cooutputparser.insertcographics(document,strCOWorkspace)
@@ -513,7 +513,7 @@ def reportbody(document):
     		p = document.add_paragraph()
     		p.add_run('Transportation conformity is required for federal transportation projects in areas that have been designated by the EPA as not meeting the NAAQS. These areas are called non-attainment areas if they currently do not meet air quality standards or maintenance areas if they have previously violated air quality standards, but currently meet them and have an approved maintenance plan. On January 5, 2005, The EPA designated 24 counties and three partial counties in Georgia as non-attainment areas for fine particular matter, called PM')
     		p.add_run('2.5').font.subscript = True
-    		p.add_run('. This designation became effective on April 5, 2005, 90 days after EPA'+ "'" + "s" + ' published action in the Federal Register. Transportation Conformity for the PM')
+    		p.add_run(""". This designation became effective on April 5, 2005, 90 days after EPA's published action in the Federal Register. Transportation Conformity for the PM""")
     		p.add_run('2.5').font.subscript = True
     		p.add_run(' standards applies as of April 5, 2006, after the one year grace period provided by the CAA. Metropolitan PM')
     		p.add_run('2.5').font.subscript = True

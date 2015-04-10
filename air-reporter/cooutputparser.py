@@ -39,10 +39,12 @@ def insertcographics(doc, workspace):
     table = document.add_table(rows=1, cols=2)
     row_cells = table.rows[0].cells
     existingp = row_cells[0].paragraphs[0]
+    existingp.style = 'TblCentered'
     existingr = existingp.add_run()
     existingr.add_picture(os.path.join(workspace,'existing.png'), width = Inches(3.32))
     existingp.add_run("Figure 2. Existing/NoBuild")
     buildp = row_cells[1].paragraphs[0]
+    buildp.style = 'TblCentered'
     buildr = buildp.add_run()
     buildr.add_picture(os.path.join(workspace,'build.png'), width = Inches(3.32), height = Inches(3.32))
     buildp.add_run("Figure 3. Build")
