@@ -6,12 +6,13 @@ Created on Thu Jan 29 13:11:38 2015
 """
 import os, docx
 from docx.shared import Inches
+from math import ceil
 
 #existingout = os.path.join(workspace,"Existing.out")
 #nobuildout = os.path.join(workspace,"NoBuild.out")
 #buildout =  os.path.join(workspace,"Build.out")
 #outputs = (existingout,nobuildout,buildout)
-document = docx.Document()
+#document = docx.Document()
 def maxreceptorcount(tploutputs):
     x = 0
     for item in tploutputs:
@@ -83,3 +84,34 @@ def createcotable(doc, workspace, backgroundppm):
         paragraph.style = 'TblCentered'
         paragraph.add_run(str(outputsources[2][i]))
     return table
+
+def msattable(document, road, length, existing, nobuild, build):
+	table = document.add_table(rows=3, cols=6)
+	table.style = 'LightShading'
+	hdrs = ["Roadway", "Roadway Length (Miles)", "", "Existing", "No Build", "Build" ]
+	for i in range(len(hdrs)):
+		table.rows[0].cells[i].text = hdrs[i]
+	rowindex = 1
+	roadcell = table.cell(rowindex,0).merge(table.cell(2,0))
+	lengthcell = table.cell(rowindex, 1).merge(table.cell(2, 1))
+	trafficlabelcell = table.cell(rowindex, 2)	
+	existingcell = table.cell(rowindex,3)
+	nobuildcell = table.cell(rowindex,4)
+	buildcell = table.cell(rowindex,5)
+	vmtlabelcell = table.cell(rowindex+ 1, 2)	
+	existingvmtcell = table.cell(rowindex + 1, 3)
+	nobuildvmtcell = table.cell(rowindex + 1, 4)
+	buildvmtcell = table.cell(rowindex + 1, 5)
+	roadcell.text = road
+	lengthcell.text = str(length)
+	trafficlabelcell.text = "ADT"
+	existingcell.text = "{:,}".format(existing)
+	nobuildcell.text = "{:,}".format(nobuild)
+	buildcell.text = "{:,}".format(build)
+	vmtlabelcell.text = "VMT"
+	existingvmtcell.text = "{:,}".format(ceil(existing * length)).rstrip(".").rstrip("0").rstrip(".")
+	nobuildvmtcell.text = "{:,}".format(ceil(nobuild * length)).rstrip(".").rstrip("0").rstrip(".")
+	buildvmtcell.text = "{:,}".format(ceil(build * length)).rstrip(".").rstrip("0").rstrip(".")
+	return table
+
+		
