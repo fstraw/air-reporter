@@ -81,6 +81,13 @@ strBackgroundConc = config.get('CO_REPORT', 'BACKGROUNDCONC')
 strBuildRec = config.get('CO_REPORT', 'RECEPTORSBUILD')
 strNoBuildRec = config.get('CO_REPORT', 'RECEPTORSNOBUILD')
 
+#MSAT
+strRoadway = config.get('MSAT_REPORT', 'ROAD')
+dblLength = float(config.get('MSAT_REPORT', 'LENGTH'))
+intExistingADT = int(config.get('MSAT_REPORT', 'EXISTINGADT'))
+intNoBuildADT = int(config.get('MSAT_REPORT', 'NOBUILDADT'))
+intBuildADT = int(config.get('MSAT_REPORT', 'BUILDADT'))
+
 def executivesummary(document):
     p = document.add_paragraph()
     p.style = "Subtitle"
@@ -589,7 +596,7 @@ def reportbody(document):
     	p = document.add_paragraph()
     	p.add_run('For each alternative, the amount of MSAT emitted would be proportional to the vehicle miles traveled, or VMT, assuming that other variables such as fleet mix are the same for each alternative. The VMT estimated for the Build Alternatives is the same as that of the No Build Alternative (refer to Table 2). The emissions increase is offset somewhat by lower MSAT emission rates due to increased speeds; according to EPA\'s MOVES2010b model, emissions of all of the priority MSAT decrease as speed increases.')
     
-    	'''insert VMT table'''
+    	cooutputparser.msattable(document, strRoadway, dblLength, intExistingADT, intNoBuildADT, intBuildADT)
     
     	p = document.add_paragraph()
     	p.add_run("""The estimated VMT under the Build Alternative is expected to be the same as that of the No Build Alternative. It is expected there would be no appreciable difference in overall MSAT emissions among the two alternatives. Regardless of the alternative chosen, emissions will likely be lower than present levels in the Build year as a result of EPA's national control programs that are projected to reduce annual MSAT emissions by over 80 percent between 2010 and 2050. Local conditions may differ from these national projections in terms of fleet mix and turnover, VMT growth rates, and local control measures. However, the magnitude of the EPA projected reductions is so great (even after accounting for VMT growth) that MSAT emissions in the study area are likely to be lower in the future in nearly all cases.""")
