@@ -1,21 +1,17 @@
 import docx, time, sys, os, ConfigParser, cooutputparser
 from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.shared import Inches
+from math import ceil
 
 """To Do
 Add Figure support
-Add logic for PM 2.5 exemption
-Add logic for CO
-Add Table Stuff for CO and MSAT
 Add TIP region picker
-Fix Page 3 paragraph (EPA apostrophe)
-TIP Number(s) - allow plural, multiple places in report
 TIP use cases in document (ozone section in particular)
 SIP reference in Executive summary
-Change Appendix B language (1st paragraph, reverse and look for errant comma)
 Change Ozone discussion to specify region
 """
 #Specify template document for styles and word document with project description
-    # Find and gather settings from the ini file
+# Find and gather settings from the ini file
 
 localpath = "../auxfiles"
 settingsFile = os.path.join(localpath, "projectinfo.ini")
@@ -43,15 +39,15 @@ strCounty = config.get('REPORT_INFO', 'COUNTY')
 strConcDate = config.get('REPORT_INFO', 'CONCDATE')
 strProjSum = config.get('REPORT_INFO', 'PROJSUM')
 boolCOReq = bool(config.get('REPORT_INFO', 'COREQ'))
-boolMSAT = config.get('REPORT_INFO', 'MEANINGFULMSAT')
+boolMSAT = bool(config.get('REPORT_INFO', 'MEANINGFULMSAT'))
 boolOzone = bool(config.get('REPORT_INFO', 'OZONEATTAINMENT'))
 boolPM = boolOzone
 strPMDet = bool(config.get('REPORT_INFO', 'LODNEEDED'))
 strProjDesc = config.get('REPORT_INFO', 'PROJECTDESC')
 ##MSAT section...[BLANK] will have the effect of moving some traffic closer to nearby homes and businesses;
 strMSATDesc = config.get('REPORT_INFO', 'MSATDESC')
-#
-##MSAT section...The localized increases in MSAT concentrations would likely be most pronounced along [BLANK]
+
+#MSAT section...The localized increases in MSAT concentrations would likely be most pronounced along [BLANK]
 strMSATConc = config.get('REPORT_INFO', 'MSATCONC')
 
 #CO Maximums
@@ -88,6 +84,117 @@ intExistingADT = int(config.get('MSAT_REPORT', 'EXISTINGADT'))
 intNoBuildADT = int(config.get('MSAT_REPORT', 'NOBUILDADT'))
 intBuildADT = int(config.get('MSAT_REPORT', 'BUILDADT'))
 
+#existingout = os.path.join(workspace,"Existing.out")
+#nobuildout = os.path.join(workspace,"NoBuild.out")
+#buildout =  os.path.join(workspace,"Build.out")
+#outputs = (existingout,nobuildout,buildout)
+#document = docx.Document()
+def maxreceptorcount(tploutputs):
+    x = 0
+    for item in tploutputs:
+        if len(item) > x:
+            x = len(item)
+    return x
+
+def parsecoresults(workspace, backgroundppm):
+    existingout = os.path.join(workspace,"Existing.out")
+    nobuildout = os.path.join(workspace,"NoBuild.out")
+    buildout =  os.path.join(workspace,"Build.out")
+    outputs = (existingout,nobuildout,buildout)    
+    alloutputs = []
+    for output in outputs:            
+        f = open(output,"rb")
+        with f:
+            linelist = [i for i in f.readlines() if i.startswith(" MAX")]
+            cooutputlist = [i for i in linelist[0].split() if i != '*' and i != "MAX"]
+            convertedlist = [float(i) + backgroundppm for i in cooutputlist]
+        alloutputs.append(convertedlist)
+    return alloutputs
+
+def insertcographics(doc, workspace):
+    document = doc
+    table = document.add_table(rows=1, cols=2)
+    row_cells = table.rows[0].cells
+    existingp = row_cells[0].paragraphs[0]
+    existingp.style = 'TblCentered'
+    existingr = existingp.add_run()
+    existingr.add_picture(os.path.join(workspace,'existing.png'), width = Inches(3.32))
+    existingp.add_run("Figure 2. Existing/NoBuild")
+    buildp = row_cells[1].paragraphs[0]
+    buildp.style = 'TblCentered'
+    buildr = buildp.add_run()
+    buildr.add_picture(os.path.join(workspace,'build.png'), width = Inches(3.32), height = Inches(3.32))
+    buildp.add_run("Figure 3. Build")
+
+def createcotable(doc, workspace, backgroundppm):
+    document = doc
+    outputsources = parsecoresults(workspace, backgroundppm)
+    requiredtblrows = maxreceptorcount(outputsources)
+    table = document.add_table(rows=1, cols=4)
+    table.style = 'LightShading'
+    hdrcells = table.rows[0].cells
+    paragraph = hdrcells[0].paragraphs[0]
+    paragraph.style = 'TblCentered'
+    paragraph.add_run("Receptors")
+    paragraph = hdrcells[1].paragraphs[0]
+    paragraph.style = 'TblCentered'
+    paragraph.add_run("Existing")
+    paragraph = hdrcells[2].paragraphs[0]
+    paragraph.style = 'TblCentered'
+    paragraph.add_run("No Build")
+    paragraph = hdrcells[3].paragraphs[0]
+    paragraph.style = 'TblCentered'
+    paragraph.add_run("Build")
+    for i in range(requiredtblrows):
+        row_cells = table.add_row().cells
+        paragraph = row_cells[0].paragraphs[0]
+        paragraph.style = 'TblCentered'
+        paragraph.add_run("Receptor " + str(i+1))
+        paragraph = row_cells[1].paragraphs[0]
+        paragraph.style = 'TblCentered'
+        paragraph.add_run(str(outputsources[0][i]))
+        paragraph = row_cells[2].paragraphs[0]
+        paragraph.style = 'TblCentered'
+        paragraph.add_run(str(outputsources[1][i]))
+        paragraph = row_cells[3].paragraphs[0]
+        paragraph.style = 'TblCentered'
+        paragraph.add_run(str(outputsources[2][i]))
+    return table
+
+def msattable(document, road, length, existing, nobuild, build):
+	table = document.add_table(rows=3, cols=6)
+	table.style = 'LightShading'
+	hdrs = ["Roadway", "Roadway Length (Miles)", "", "Existing", "No Build", "Build" ]
+	for i in range(len(hdrs)):
+		table.rows[0].cells[i].text = hdrs[i]
+	rowindex = 1
+	roadcell = table.cell(rowindex,0).merge(table.cell(2,0))
+	lengthcell = table.cell(rowindex, 1).merge(table.cell(2, 1))
+	trafficlabelcell = table.cell(rowindex, 2)	
+	existingcell = table.cell(rowindex,3)
+	nobuildcell = table.cell(rowindex,4)
+	buildcell = table.cell(rowindex,5)
+	vmtlabelcell = table.cell(rowindex+ 1, 2)	
+	existingvmtcell = table.cell(rowindex + 1, 3)
+	nobuildvmtcell = table.cell(rowindex + 1, 4)
+	buildvmtcell = table.cell(rowindex + 1, 5)
+	roadcell.paragraphs[0].add_run(road)
+	lengthcell.text = str(length)
+	varlist = [roadcell, lengthcell, trafficlabelcell,
+			existingcell, nobuildcell, buildcell, vmtlabelcell,
+			existingvmtcell, nobuildvmtcell, buildvmtcell]
+	for var in varlist:
+		var.paragraphs[0].style = 'TblCentered'
+	trafficlabelcell.paragraphs[0].add_run("ADT")
+	existingcell.paragraphs[0].add_run("{:,}".format(existing))
+	nobuildcell.paragraphs[0].add_run("{:,}".format(nobuild))
+	buildcell.paragraphs[0].add_run("{:,}".format(build))
+	vmtlabelcell.paragraphs[0].add_run("VMT")
+	existingvmtcell.paragraphs[0].add_run("{:,}".format(ceil(existing * length)).rstrip(".").rstrip("0").rstrip("."))
+	nobuildvmtcell.paragraphs[0].add_run("{:,}".format(ceil(nobuild * length)).rstrip(".").rstrip("0").rstrip("."))
+	buildvmtcell.paragraphs[0].add_run("{:,}".format(ceil(build * length)).rstrip(".").rstrip("0").rstrip("."))
+	return table
+
 def executivesummary(document):
     p = document.add_paragraph()
     p.style = "Subtitle"
@@ -122,31 +229,36 @@ def executivesummary(document):
     
     p = document.add_paragraph()
     p.style = "NoSpacing"
-    p.add_run('Ozone: MPO and TIP Number: ').bold = True
-    p.add_run("""This project is identified in the %s and FY 2014-2019 Transportation Improvement Program by reference number(s) %s""" % (strMPO, strTIP))
-    
+    if boolOzone:
+    	p.add_run('Ozone: MPO and TIP Number: ').bold = True
+    	p.add_run("""This project is identified in the %s and FY 2014-2019 Transportation Improvement Program by reference number(s) %s.""" % (strMPO, strTIP))
+    else:
+    	p.add_run('Ozone: ').bold = True
+    	p.add_run("""This project is in an attainment area.""")     
     p = document.add_paragraph()
     p.style = "NoSpacing"
     p.add_run('PM').bold = True
     p.add_run('2.5').font.subscript = True
     p.add_run(': ').bold = True
     p.bold = True
-    p.add_run("""This project was evaluated by an interagency group consisting of FHWA, EPA, EPD and the MPO and they agreed that this project did not appear to be a "Project of Concern" per the Transportation Conformity Rule and thus meets the statutory and regulatory requirements for PM""")
-    p.add_run('2.5').font.subscript = True
-    p.add_run(""" hotspots without a qualitative analysis on %s.""" % (strConcDate))
-    
+    if boolPM:
+    	p.add_run("""This project was evaluated by an interagency group consisting of FHWA, EPA, EPD and the MPO and they agreed that this project did not appear to be a "Project of Concern" per the Transportation Conformity Rule and thus meets the statutory and regulatory requirements for PM""")
+    	p.add_run('2.5').font.subscript = True
+    	p.add_run(""" hotspots without a qualitative analysis on %s.""" % (strConcDate))
+    else:
+    	p.add_run("""This project is in an attainment area.""")
     p = document.add_paragraph()
     p.style = "NoSpacing"
     p.add_run('CO Modeling Assumptions: ').bold = True
-    if boolCOReq == True:
-    	p.add_run("""The highest 1-hour CO concentration of %s ppm in the %s design year is projected at receptor %s, located in the %s quadrant of the studied intersection. This value is lower than the maximum allowable NAAQS for the one-hour level of 35 ppm and the 8-hour level of 9 ppm.""" % (strCOBuild, strDesignYear, strMaxReceptorBuild, strReceptorQuadrant))
+    if boolCOReq:
+    	p.add_run("""The highest 1-hour CO concentration of %s ppm in the %s design year is projected at receptor %s, located in the %s quadrant of the studied intersection. This value is lower than the maximum allowable NAAQS for the one-hour level of 35 ppm and the eight-hour level of 9 ppm.""" % (strCOBuild, strDesignYear, strMaxReceptorBuild, strReceptorQuadrant))
     else:
     	p.add_run("""The project was evaluated for the potential to result in increased CO concentrations in the project area. Based on LOS estimates, it has been determined that this project would not increase traffic congestion, increase idle emissions, or CO concentrations.""")
     
     p = document.add_paragraph()
     p.style = "NoSpacing"
     p.add_run('MSAT: ').bold = True
-    if boolMSAT == True:
+    if boolMSAT:
     	p.add_run('The proposed project is classified as a project with low meaningful MSAT effects.')
     else:
     	p.add_run('The proposed project is classified as a project with no meaningful MSAT effects.')
@@ -195,7 +307,7 @@ def reportbody(document):
     
     document.add_heading('Introduction', 2)
     p = document.add_paragraph()
-    p.add_run('The 1990 Clean Air Act (CAA) amendments and guidelines, issued by the U.S. Environmental Protection Agency (EPA), set forth guidelines to be followed by agencies responsible for attainment of the National Ambient Air Quality Standards (NAAQS). The CAA section 176(c) requires that Federal transportation projects are consistent with state air quality goals, found in the State Implementation Plan (SIP). The process to ensure this consistency is called Transportation Conformity. Conformity to the SIP means that transportation activities will not cause new violations of the NAAQS, worsen existing violations of the standards, or delay timely attainment of the relevant standard. In complying with these guidelines the Georgia Department of Transportation (GDOT) has completed an analysis on the effects of the proposed project on air quality.')
+    p.add_run('The 1990 Clean Air Act (CAA) amendments and guidelines, issued by the U.S. Environmental Protection Agency (EPA), set forth guidelines to be followed by agencies responsible for attainment of the National Ambient Air Quality Standards (NAAQS). The CAA section 176(c) requires that Federal transportation projects are consistent with state air quality goals, found in the State Implementation Plan (SIP). The process to ensure this consistency is called Transportation Conformity. Conformity to the SIP means that transportation activities will not cause new violations of the NAAQS, worsen existing violations of the standards, or delay timely attainment of the relevant standard. In complying with these guidelines, the Georgia Department of Transportation (GDOT) has completed an analysis on the effects of the proposed project on air quality.')
     
     document.add_heading('What is the Proposed Project?', 2)
     p = document.add_paragraph()
@@ -231,11 +343,11 @@ def reportbody(document):
     p = document.add_paragraph()
     
     #Fix TIP Variables
-    if boolOzone == True:
+    if boolOzone:
     	p.add_run("""This project is in an area where the SIP contains transportation control measures. The CAA requires Transportation Plans and Transportation Improvement Programs (TIP) in areas not meeting the NAAQS to conform to the emissions budget of the SIP for air quality. The FY 2014-2019 TIP is the current adopted plan for the Atlanta area showing the region's highest transportation priorities. It was adopted by the Atlanta Regional Commission on March 26, 2014, with GRTA Board action on April 9, 2014, and received conformity determination by the US DOT on April 30, 2014.""")
     	
     	p = document.add_paragraph()
-    	p.add_run("""This project is identified in the %s and FY 2014-2019 TIP by reference number %s""" % (strMPO, strTIP))
+    	p.add_run("""This project is identified in the %s and FY 2014-2019 TIP by reference number %s.""" % (strMPO, strTIP))
     
     	p = document.add_paragraph()
     	p.add_run('Inclusion in a conforming plan also serves as project level analysis for O')
@@ -251,7 +363,7 @@ def reportbody(document):
     
     document.add_heading('How Will The Project Affect Carbon Monoxide (CO) Emissions?', 2)
     
-    if boolCOReq == False:
+    if not boolCOReq:
     	p = document.add_paragraph()
     	p.add_run('Georgia is in attainment for CO; however, CO is also a concern in areas where signalized intersections (due to idling vehicles) are operating at a Level-of-Service (LOS) D, E, or F in the project design year (20 year design horizon).')
     
@@ -321,7 +433,7 @@ def reportbody(document):
     	run = paragraph.add_run('volume greatly exceeds the capacity and lengthy delays occur')
     
     	p = document.add_paragraph()
-    	p.add_run("""The project was evaluated for the potential to result in increased CO concentrations in the project area. Based on LOS estimates, it has been determined that this project would not increase traffic congestion, increase idle emissions, or CO concentrations. The estimated LOS under the No Build Alternative would be D, while the estimated LOS under the Build Alternative would be C. %s""" % (strCOArg))
+    	p.add_run("""The project was evaluated for the potential to result in increased CO concentrations in the project area. Based on LOS estimates, it has been determined that this project would not increase traffic congestion, increase idle emissions, or CO concentrations. The estimated LOS under the No-Build Alternative would be D, while the estimated LOS under the Build Alternative would be C.""")
     else:
     	document.add_heading('Introduction', 4)
     	p = document.add_paragraph()
@@ -407,21 +519,21 @@ def reportbody(document):
     	
     	document.add_heading('CO Microscale Model Input Parameters', 4)
     	p = document.add_paragraph()
-    	p.add_run("""Inputs to the models were such that they would provide a "worst-case" analysis. The term "worst-case" is frequently used in air quality impact analyses. The approach is to use a set of "worst-case" meteorological conditions: lowest realistic wind speed, worst reasonable stability class, lowest reasonable temperature, highest expected traffic volumes, emissions associated with peak speeds and closest reasonable receptor locations. If the "worst-case" concentration does not violate air quality standards, it can be reasonably assumed that under any future set of actual meteorological conditions, the actual air quality will be better than the standards.""")
+    	p.add_run("""Inputs to the models were such that they would provide a "worst case" analysis. The term "worst case" is frequently used in air quality impact analyses. The approach is to use a set of "worst case" meteorological conditions: lowest realistic wind speed, worst reasonable stability class, lowest reasonable temperature, highest expected traffic volumes, emissions associated with peak speeds and closest reasonable receptor locations. If the "worst case" concentration does not violate air quality standards, it can be reasonably assumed that under any future set of actual meteorological conditions, the actual air quality will be better than the standards.""")
     	
     	#Add attachment info
     	p = document.add_paragraph()
     	p.add_run("""The emission factors used in the CO microscale model were based off of GDOT Rate Tables using the EPA's Motor Vehicle Emission Simulator (MOVES). Emission levels were calculated per site specific criteria, including road grade (0 percent), vehicle mix (%s passenger cars; %s heavy trucks; %s medium trucks), design year (%s), road type (%s), and speed limit (%s). All emissions factors were based on temperatures under 70 degrees in the %s. See Attachment X for emission factor worksheets.""" % (strAuto, strHeavy, strMedium, strDesignYear, strRoadType, strSpeedLimitRange, strRegion))
     	
     	p = document.add_paragraph()
-    	p.add_run("""Meteorological inputs to the CAL3QHC model were those that would give the worst-case CO concentrations. The wind angle to the roadway was modeled at 10 degree intervals with a wind speed of one meter per second. In general, atmospheric stability is a function of the temperature distribution with height, solar radiation, cloud cover, and wind speed. Stability is identified by six classes ranging from A (very unstable) to F (very stable). A Stability Class %s was used for this project. Stable atmospheres contain little turbulence in which pollutant concentrations are high.""" % (strStabilityClass))
+    	p.add_run("""Meteorological inputs to the CAL3QHC model were those that would give the worst case CO concentrations. The wind angle to the roadway was modeled at 10 degree intervals with a wind speed of one meter per second. In general, atmospheric stability is a function of the temperature distribution with height, solar radiation, cloud cover, and wind speed. Stability is identified by six classes ranging from A (very unstable) to F (very stable). A Stability Class %s was used for this project. Stable atmospheres contain little turbulence in which pollutant concentrations are high.""" % (strStabilityClass))
     	
     	p = document.add_paragraph()
-    	p.add_run("""A mixing cell height (the elevation of the boundary between the vertically mixed layer of air closest to the earths surface and the relatively stable layer of air above) of 1000 meters, the default value of CAL3QHC, and a surface roughness (the proportional measure of the height of obstacles to the wind flow) factor of %s cm was used. See Table 3: Surface Roughness Lengths for Various Land Uses below. All roadway segments were modeled as at-grade facilities. Peak PM hourly traffic volumes were used as the worst-case conditions for the one-hour analysis.""" % (strSurfaceRoughness))
+    	p.add_run("""A mixing cell height (the elevation of the boundary between the vertically mixed layer of air closest to the earths surface and the relatively stable layer of air above) of 1000 meters, the default value of CAL3QHC, and a surface roughness (the proportional measure of the height of obstacles to the wind flow) factor of %s cm was used. See Table 3: Surface Roughness Lengths for Various Land Uses below. All roadway segments were modeled as at-grade facilities. Peak PM hourly traffic volumes were used as the worst case conditions for the one-hour analysis.""" % (strSurfaceRoughness))
     	
     	#Add attachment info
     	p = document.add_paragraph()
-    	p.add_run("""The background concentration is usually defined as the concentration immediately upwind of the source. Through an agreement with the Georgia EPA, background CO concentration is considered to be only a small portion of the total input to the micro scale analysis. A background concentration of 1 ppm is added for rural areas, 2 ppm for suburban areas, and 3 ppm for urban areas. A background concentration of %s ppm has been added to the air quality dispersion modeling results. The intersection %s was analyzed for the %s build and no-build alternatives. See Attachment X for CO inputs.""" % (strBackgroundConc, strIntersection, strDesignYear))
+    	p.add_run("""The background concentration is usually defined as the concentration immediately upwind of the source. Through an agreement with the Georgia EPA, background CO concentration is considered to be only a small portion of the total input to the micro scale analysis. A background concentration of 1 ppm is added for rural areas, 2 ppm for suburban areas, and 3 ppm for urban areas. A background concentration of %s ppm has been added to the air quality dispersion modeling results. The intersection of %s was analyzed for the %s existing, %s build and no-build alternatives. See Attachment X for CO inputs.""" % (strBackgroundConc, strIntersection, strExistingYear, strDesignYear))
     		
     	p = document.add_paragraph()
     	p.add_run('Receptor locations were identified to perform pollutant calculations. There were %s receptors chosen in the no-build conditions and %s receptors were chosen in the build condition. These locations were chosen because they represent the closest location where the public is likely to be present. Due to their proximity to the signal controlled intersection, these receptors would provide the highest concentrations of CO from the operations of the roadways.' % (strBuildRec, strNoBuildRec))
@@ -486,16 +598,16 @@ def reportbody(document):
     	#Add Attachment Data
     	document.add_heading('CO Microscale Model Summary of Results', 4)
     	p = document.add_paragraph()
-    	p.add_run("""The State of Georgia and the EPA have set the maximum acceptable average CO concentrations at 35 ppm for a one-hour period, and 9 ppm for a continuous eight-hour period. The peak one-hour concentrations for %s build and no-build were predicted and are listed below in Table 4: Predicted Highest One-Hour CO concentrations (ppm). A copy of the model run data input and outputs are included in Attachment X. The highest 1-hour CO concentration of %s in the %s design year is projected at receptor %s, located in the %s quadrant of the studied intersection. This value is lower than the maximum allowable NAAQS for the one-hour level of 35 ppm and the eight-hour level of 9 ppm. Since the highest one hour concentration is lower than both the one hour and eight hour standards, an eight hour concentration was not calculated. (Note eight-hour concentrations are calculated by multiplying the CAL3QHC results by a persistent factor of 0.6 and adding the background concentration to the results.)""" % (strDesignYear, strCOBuild, strDesignYear, strMaxReceptorBuild, strReceptorQuadrant))
+    	p.add_run("""The State of Georgia and the EPA have set the maximum acceptable average CO concentrations at 35 ppm for a one-hour period, and 9 ppm for a continuous eight-hour period. The peak one-hour concentrations for the %s existing , and %s build and no-build conditions were predicted and are listed below in Table 4: Predicted Highest One-Hour CO concentrations (ppm). A copy of the model run data input and outputs are included in Attachment X. The highest 1-hour CO concentration of %s in the %s design year is projected at receptor %s, located in the %s quadrant of the studied intersection. This value is lower than the maximum allowable NAAQS for the one-hour level of 35 ppm and the eight-hour level of 9 ppm. Since the highest one-hour concentration is lower than both the one-hour and eight-hour standards, an eight-hour concentration was not calculated. (Note eight-hour concentrations are calculated by multiplying the CAL3QHC results by a persistent factor of 0.6 and adding the background concentration to the results.)""" % (strExistingYear, strDesignYear, strCOBuild, strDesignYear, strMaxReceptorBuild, strReceptorQuadrant))
     	
     	'''Insert CO Graphics'''
-    	cooutputparser.insertcographics(document,strCOWorkspace)
+    	insertcographics(document,strCOWorkspace)
     	
     	'''Insert CO Table'''
     	p = document.add_paragraph()
     	p.style = "FigureCaption"
     	p.add_run('Table 4: Predicted Highest One-Hour CO concentrations (ppm)')
-    	cooutputparser.createcotable(document, strCOWorkspace, int(strBackgroundConc))
+    	createcotable(document, strCOWorkspace, int(strBackgroundConc))
     	
     	p = document.add_paragraph()
     	p.style = "FigureNote"
@@ -516,7 +628,7 @@ def reportbody(document):
     	p.add_run('2.5').font.subscript = True
     	p.add_run(' non-attainment area. Therefore, an assessment is not required.')
     else:
-    	if strPMDet == True:
+    	if strPMDet:
     		p = document.add_paragraph()
     		p.add_run('Transportation conformity is required for federal transportation projects in areas that have been designated by the EPA as not meeting the NAAQS. These areas are called non-attainment areas if they currently do not meet air quality standards or maintenance areas if they have previously violated air quality standards, but currently meet them and have an approved maintenance plan. On January 5, 2005, The EPA designated 24 counties and three partial counties in Georgia as non-attainment areas for fine particular matter, called PM')
     		p.add_run('2.5').font.subscript = True
@@ -528,30 +640,28 @@ def reportbody(document):
     		p.add_run('2.5').font.subscript = True
     		p.add_run(' standard.')
     		#Add Attachment info
-    		if strPMDet == True:
-    			p = document.add_paragraph()
-    			p.add_run("""This project has been evaluated by an interagency group consisting of Federal Highway Administration (FHWA), EPA, Georgia Department of Natural Resources Environmental Protection Division (GA EPD), and the MPO and they agreed that these projects do NOT appear to be "Projects of Concern" per the Transportation Conformity Rule and thus meet the statutory and regulatory requirements for PM""")
-    			p.add_run('2.5').font.subscript = True
-    			p.add_run(""" hotspots without a qualitative analysis on %s. Documentation and correspondence are included in Attachment 2.""" %(strConcDate))
+
+    		p = document.add_paragraph()
+    		p.add_run("""This project has been evaluated by an interagency group consisting of FHWA, EPA, Georgia Department of Natural Resources Environmental Protection Division (GA EPD), and the Metropolitan Planning Organization (MPO) and they agreed that this project does NOT appear to be a "Project of Concern" per the Transportation Conformity Rule and thus meets the statutory and regulatory requirements for PM""")
+    		p.add_run('2.5').font.subscript = True
+    		p.add_run(""" hotspots without a qualitative analysis on %s. Documentation and correspondence are included in Attachment 2.""" %(strConcDate))
     		#Add Attachment info
     	else:
     		p = document.add_paragraph()
-    		p.add_run('This project has been evaluated by an interagency group consisting of Federal Highway Administration (FHWA), EPA, Georgia Department of Natural Resources Environmental Protection Division (GA EPD) and the MPO and was found to be exempt from the PM')
+    		p.add_run('This project has been evaluated by an interagency group consisting of FHWA, EPA, Georgia Department of Natural Resources Environmental Protection Division (GA EPD) and the MPO and was found to be exempt from the PM')
     		p.add_run('2.5').font.subscript = True
     		p.add_run(""" hot spot requirements on %s. Documentation and correspondence are included in Attachment 1.""" % (strConcDate))
     
-    document.add_heading('How Does the Proposed Project Affect Mobile Source Air Toxics (MSAT)?', 2)
-    
-    
+    document.add_heading('How Does the Proposed Project Affect Mobile Source Air Toxics (MSAT)?', 2)    
     
     document.add_heading('Mobile Source Air Toxics (MSAT)', 3)
     
-    if boolMSAT == False:
+    if not boolMSAT:
     	p = document.add_paragraph()
     	p.add_run("""Mobile Source Air Toxics (MSAT) assessments are required statewide for most federal transportation projects. Based on the example projects defined in the FHWA guidance "Interim Guidance Update on Mobile Source Air Toxic Analysis in National Environmental Policy Act (NEPA) Documents" dated December 6, 2012, %s would be classified as a project with no meaningful MSAT impacts. In addition to the criteria air pollutants that must meet the NAAQS, EPA also regulates air toxics. Most air toxics originate from human-made sources, including on-road mobile sources, non-road mobile sources (e.g., airplanes), area sources (e.g., dry cleaners) and stationary sources (e.g., factories or refineries).""" % (strProjectName))
     	
     	p = document.add_paragraph()
-    	p.add_run("""The purpose of this project is to %s. This project has been determined to generate minimal air quality impacts for CAA criteria pollutants and has not been linked with any special MSAT concerns. As such, this project will not result in changes in traffic volumes, vehicle mix, basic project location, or any other factor that would cause an increase in MSAT impacts of the project from that of the No Build Alternative. It is therefore concluded the proposed action would have no meaningful potential MSAT impacts.""" % (strProjDesc))
+    	p.add_run("""The purpose of this project is to %s. This project has been determined to generate minimal air quality impacts for CAA criteria pollutants and has not been linked with any special MSAT concerns. As such, this project will not result in changes in traffic volumes, vehicle mix, basic project location, or any other factor that would cause an increase in MSAT impacts of the project from that of the No-Build Alternative. It is therefore concluded the proposed action would have no meaningful potential MSAT impacts.""" % (strProjDesc))
     	
     	p = document.add_paragraph()
     	p.add_run("""Moreover, EPA regulations for vehicle engines and fuels will cause overall MSAT emissions to decline significantly over the next several decades. Based on regulations now in effect, an analysis of national trends with EPA's MOVES model forecasts a combined reduction of over 80 percent in the total annual emission rate for the priority MSAT from 2010 to 2050 while vehicle-miles of travel are projected to increase by over 100 percent. This will both reduce the background level of MSAT as well as the possibility of even minor MSAT emissions from this project.""")
@@ -594,15 +704,18 @@ def reportbody(document):
     
     	document.add_heading('Qualitative MSAT Assessment', 4)
     	p = document.add_paragraph()
-    	p.add_run('For each alternative, the amount of MSAT emitted would be proportional to the vehicle miles traveled, or VMT, assuming that other variables such as fleet mix are the same for each alternative. The VMT estimated for the Build Alternatives is the same as that of the No Build Alternative (refer to Table 2). The emissions increase is offset somewhat by lower MSAT emission rates due to increased speeds; according to EPA\'s MOVES2010b model, emissions of all of the priority MSAT decrease as speed increases.')
-    
-    	cooutputparser.msattable(document, strRoadway, dblLength, intExistingADT, intNoBuildADT, intBuildADT)
+    	p.add_run('For each alternative, the amount of MSAT emitted would be proportional to VMT, assuming that other variables such as fleet mix are the same for each alternative. The VMT estimated for the Build Alternatives is the same as that of the No-Build Alternative (refer to Table 5). The emissions increase is offset somewhat by lower MSAT emission rates due to increased speeds; according to EPA\'s MOVES2010b model, emissions of all of the priority MSAT decrease as speed increases.')
+					
+    	p = document.add_paragraph()
+    	p.style = "FigureCaption"
+    	p.add_run('Table 5: VMT')
+    	msattable(document, strRoadway, dblLength, intExistingADT, intNoBuildADT, intBuildADT)
     
     	p = document.add_paragraph()
-    	p.add_run("""The estimated VMT under the Build Alternative is expected to be the same as that of the No Build Alternative. It is expected there would be no appreciable difference in overall MSAT emissions among the two alternatives. Regardless of the alternative chosen, emissions will likely be lower than present levels in the Build year as a result of EPA's national control programs that are projected to reduce annual MSAT emissions by over 80 percent between 2010 and 2050. Local conditions may differ from these national projections in terms of fleet mix and turnover, VMT growth rates, and local control measures. However, the magnitude of the EPA projected reductions is so great (even after accounting for VMT growth) that MSAT emissions in the study area are likely to be lower in the future in nearly all cases.""")
+    	p.add_run("""The estimated VMT under the Build Alternative is expected to be the same as that of the No-Build Alternative. It is expected there would be no appreciable difference in overall MSAT emissions among the two alternatives. Regardless of the alternative chosen, emissions will likely be lower than present levels in the Build year as a result of EPA's national control programs that are projected to reduce annual MSAT emissions by over 80 percent between 2010 and 2050. Local conditions may differ from these national projections in terms of fleet mix and turnover, VMT growth rates, and local control measures. However, the magnitude of the EPA projected reductions is so great (even after accounting for VMT growth) that MSAT emissions in the study area are likely to be lower in the future in nearly all cases.""")
     
     	p = document.add_paragraph()
-    	p.add_run("""%s contemplated as part of the Build Alternative will have the effect of moving some traffic closer to nearby homes and businesses; therefore, under each alternative there may be localized areas where ambient concentrations of MSAT could be higher under certain Build Alternatives than the No Build Alternative. The localized increases in MSAT concentrations would likely be most pronounced %s. However, the magnitude and the duration of these potential increases compared to the No Build alternative cannot be reliably quantified due to incomplete or unavailable information in forecasting project-specific MSAT health impacts. In sum, when a highway is widened, the localized level of MSAT emissions for the Build Alternative could be higher relative to the No Build Alternative, but this could be offset due to increases in speeds and reductions in congestion (which are associated with lower MSAT emissions). Also, MSAT will be lower in other locations when traffic shifts away from them. However, on a regional basis, EPA's vehicle and fuel regulations, coupled with fleet turnover, will over time cause substantial reductions that, in almost all cases, will cause region-wide MSAT levels to be significantly lower than today.""" % (strMSATDesc, strMSATConc))
+    	p.add_run("""%s contemplated as part of the Build Alternative will have the effect of moving some traffic closer to nearby homes and businesses; therefore, under each alternative there may be localized areas where ambient concentrations of MSAT could be higher under certain Build Alternatives than the No-Build Alternative. The localized increases in MSAT concentrations would likely be most pronounced %s. However, the magnitude and the duration of these potential increases compared to the No-Build alternative cannot be reliably quantified due to incomplete or unavailable information in forecasting project-specific MSAT health impacts. In sum, when a highway is widened, the localized level of MSAT emissions for the Build Alternative could be higher relative to the No-Build Alternative, but this could be offset due to increases in speeds and reductions in congestion (which are associated with lower MSAT emissions). Also, MSAT will be lower in other locations when traffic shifts away from them. However, on a regional basis, EPA's vehicle and fuel regulations, coupled with fleet turnover, will over time cause substantial reductions that, in almost all cases, will cause region-wide MSAT levels to be significantly lower than today.""" % (strMSATDesc, strMSATConc))
     
     	document.add_heading('Incomplete or Unavailable Information for Project-Specific MSAT Health Impacts Analysis', 4)
     	p = document.add_paragraph()
