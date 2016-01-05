@@ -24,8 +24,8 @@ else:
     sys.exit()
 #DOCX file containing styles
 document = docx.Document('../auxfiles/report_template.docx')
-#DOCX file containing project description
-project_desc = docx.Document('../auxfiles/project_description.docx')
+#Project description filler
+project_desc = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed sed tristique felis. Nullam scelerisque ligula eu magna elementum interdum. In sed consequat turpis, porttitor mollis leo. Suspendisse blandit tincidunt ante, aliquam semper lacus volutpat sit amet. Maecenas scelerisque maximus metus eu mattis. Curabitur sit amet nibh bibendum, vehicula ante a, porta lacus. Vestibulum elementum cursus ligula, suscipit consequat augue luctus quis. Nulla facilisi. Nam quis sem ex. Maecenas accumsan ligula ut lorem dapibus, in sagittis sapien dignissim. In eget fermentum nisl. Sed pretium nibh lectus, ut accumsan dolor volutpat nec. Ut sed est non augue vulputate vehicula ac ut felis. Sed accumsan tristique dolor nec maximus. Ut bibendum massa sit amet rhoncus mollis.'
 # Report values
 preparedBy = config.get('REPORT_INFO', 'PREPAREDBY')
 qcBy = config.get('REPORT_INFO', 'QCBY')
@@ -57,8 +57,8 @@ strCOBuild = config.get('CO_REPORT', 'COBUILD')
 strCONoBuild = config.get('CO_REPORT', 'CONOBUILD')
 strExistingYear = config.get('CO_REPORT', 'EXISTINGYEAR')
 strDesignYear = config.get('CO_REPORT', 'DESIGNYEAR')
-strMaxReceptorBuild = config.get('CO_REPORT', 'MAXRECEPTORSBUILD')
-strMaxReceptorNoBuild = config.get('CO_REPORT', 'MAXRECEPTORSNOBUILD')
+strMaxReceptorBuild = config.get('CO_REPORT', 'MAXRECEPTORBUILD')
+strMaxReceptorNoBuild = config.get('CO_REPORT', 'MAXRECEPTORNOBUILD')
 strReceptorQuadrant = config.get('CO_REPORT', 'RECEPTORQUADRANTS')
 
 #Number of intersections operating at LOS C,D, or F
@@ -225,9 +225,7 @@ def executivesummary(document):
     p = document.add_paragraph()
     p.style = "NoSpacing"
     p.add_run('Project Description: ').bold = True
-    for paragraph in project_desc.paragraphs:	
-    	for run in paragraph.runs:
-    		p.add_run(run.text)
+    p.add_run(project_desc).font.color.rgb = red
     
     p = document.add_paragraph()
     p.style = "NoSpacing"
@@ -318,10 +316,8 @@ def reportbody(document):
     p = document.add_paragraph()
     p.add_run('Details:').underline = True
     
-    for paragraph in project_desc.paragraphs:
-    	p = document.add_paragraph()
-    	for run in paragraph.runs:
-    		p.add_run(run.text)
+    p = document.add_paragraph()
+    p.add_run(project_desc).font.color.rgb = red
     
     document.add_heading('What Criteria Pollutants Are Studied?', 2)
     p = document.add_paragraph()
@@ -402,8 +398,8 @@ def reportbody(document):
     p = document.add_paragraph()
     p.style = "SpaceBefore"
     p.add_run("""The EPA's regulations on Pb are focused on smelter and battery plants, the major sources of Pb in the air. A regulatory ban on the introduction of gasoline produced with the use of any lead additive was issued as of January 1, 1996. In the United States, sulfur levels in fuel have been slowly ratcheted down. The EPA's """)
-    p.add_run("""Gasoline Sulfur """).font.underline = True
-    p.add_run("""program in effect (2004-2007) reduced the sulfur content of gasoline by up to 90 percent from uncontrolled levels. In addition, the Gasoline Sulfur program aims to lower sulfur content of gasoline to 10 parts per million (ppm) averages by 2017. A 15 ppm sulfur specification, known as Ultra Low Sulfur Diesel (ULSD), was phased in for highway diesel fuel from 2006-2010. In addition, Georgia is in attainment for Pb and SO""")
+    p.add_run("""Gasoline Sulfur""").font.underline = True
+    p.add_run(""" program in effect (2004-2007) reduced the sulfur content of gasoline by up to 90 percent from uncontrolled levels. In addition, the Gasoline Sulfur program aims to lower sulfur content of gasoline to 10 parts per million (ppm) averages by 2017. A 15 ppm sulfur specification, known as Ultra Low Sulfur Diesel (ULSD), was phased in for highway diesel fuel from 2006-2010. In addition, Georgia is in attainment for Pb and SO""")
     p.add_run("""2""").font.subscript = True
     p.add_run("""; therefore, no further documentation is required.""")
     
@@ -542,7 +538,8 @@ def reportbody(document):
     
     	p = document.add_paragraph()
     	p.style = "SpaceBefore"
-    	p.add_run("""The project was evaluated for the potential to result in increased CO concentrations in the project area. Based on LOS estimates, it has been determined that this project would not increase traffic congestion, increase idle emissions, or CO concentrations. The estimated LOS under the No-Build Alternative would be D, while the estimated LOS under the Build Alternative would be C.""")
+    	p.add_run("""The project was evaluated for the potential to result in increased CO concentrations in the project area. Based on LOS estimates, it has been determined that this project would not increase traffic congestion, increase idle emissions, or CO concentrations. """)
+    	p.add_run("""The estimated LOS under the No-Build Alternative would be D, while the estimated LOS under the Build Alternative would be C.""").font.color.rgb = red
     else:
     	document.add_heading('Introduction', 4)
     	p = document.add_paragraph()
@@ -673,7 +670,7 @@ def reportbody(document):
     	
     	p = document.add_paragraph()
     	p.add_run("""A mixing cell height (the elevation of the boundary between the vertically mixed layer of air closest to the earths surface and the relatively stable layer of air above) of 1,000 meters, the default value of CAL3QHC, and a surface roughness (the proportional measure of the height of obstacles to the wind flow) factor of %s cm was used (""" % (strSurfaceRoughness))
-    	p.add_run("""see Table 4., below""").font.color.rgb = red
+    	p.add_run("""see Table 4, below""").font.color.rgb = red
     	p.add_run("""). All roadway segments were modeled as at-grade facilities. Peak PM hourly traffic volumes were used as the worst case conditions for the one-hour analysis.""")
     	
     	#Add Appendix info
