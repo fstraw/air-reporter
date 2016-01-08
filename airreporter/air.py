@@ -105,7 +105,7 @@ def parsecoresults(workspace, backgroundppm):
     outputs = (existingout,nobuildout,buildout)    
     alloutputs = []
     for output in outputs:            
-        f = open(output,"rb")
+        f = open(output, "rb")
         with f:
             linelist = [i for i in f.readlines() if i.startswith(" MAX")]
             cooutputlist = [i for i in linelist[0].split() if i != '*' and i != "MAX"]
@@ -120,18 +120,22 @@ def insertcographics(doc, workspace):
     existingp = row_cells[0].paragraphs[0]
     existingp.style = 'TblCentered'
     existingr = existingp.add_run()
-    existingr.add_picture(os.path.join(workspace,'existing.png'), width = Inches(3.32))
+    if os.path.exists(os.path.join(workspace,'existing.png')):
+        existingr.add_picture(os.path.join(workspace,'existing.png'), width = Inches(3.32))
+    else:
+        print "Could not find existing CO graphic in {}".format(workspace)
     existingp.add_run("Figure 2. Existing/NoBuild")
     buildp = row_cells[1].paragraphs[0]
     buildp.style = 'TblCentered'
     buildr = buildp.add_run()
-    buildr.add_picture(os.path.join(workspace,'build.png'), width = Inches(3.32), height = Inches(3.32))
+    if os.path.exists(os.path.join(workspace,'build.png')):
+        buildr.add_picture(os.path.join(workspace,'build.png'), width = Inches(3.32), height = Inches(3.32))
+    else:
+        print "Could not find build CO graphic in {}".format(workspace)
     buildp.add_run("Figure 3. Build")
 
 def createcotable(doc, workspace, backgroundppm):
     document = doc
-    outputsources = parsecoresults(workspace, backgroundppm)
-    requiredtblrows = maxreceptorcount(outputsources)
     table = document.add_table(rows=1, cols=4)
     table.style = 'LightShading'
     hdrcells = table.rows[0].cells
@@ -147,6 +151,11 @@ def createcotable(doc, workspace, backgroundppm):
     paragraph = hdrcells[3].paragraphs[0]
     paragraph.style = 'TblCentered'
     paragraph.add_run("Build")
+    if not os.path.exists(workspace):
+        print "CO Directory {} does not exist!".format(workspace)
+        return False
+    outputsources = parsecoresults(workspace, backgroundppm)
+    requiredtblrows = maxreceptorcount(outputsources)
     for i in range(requiredtblrows):
         row_cells = table.add_row().cells
         paragraph = row_cells[0].paragraphs[0]
