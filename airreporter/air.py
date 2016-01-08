@@ -548,7 +548,7 @@ def reportbody(document):
     
     	p = document.add_paragraph()
     	p.style = "SpaceBefore"
-    	p.add_run("""The project was evaluated for the potential to result in increased CO concentrations in the project area. Based on LOS estimates, it has been determined that this project would not increase traffic congestion, increase idle emissions, or CO concentrations. """)
+    	p.add_run("""The project was evaluated for the potential to result in increased CO concentrations in the project area. Based on LOS estimates, it has been determined that this project would not increase traffic congestion, increase idle emissions, or CO concentrations; therefore, the project is consistent with state and federal air quality goals for CO.""")
     	p.add_run("""The estimated LOS under the No-Build Alternative would be D, while the estimated LOS under the Build Alternative would be C.""").font.color.rgb = red
     else:
     	document.add_heading('Introduction', 4)
@@ -823,7 +823,7 @@ def reportbody(document):
     	p.add_run("""Mobile Source Air Toxics (MSAT) assessments are required statewide for most federal transportation projects. Based on the example projects defined in the FHWA guidance "Interim Guidance Update on Mobile Source Air Toxic Analysis in National Environmental Policy Act (NEPA) Documents" dated December 6, 2012, %s would be classified as a project with no meaningful MSAT impacts. In addition to the criteria air pollutants that must meet the NAAQS, EPA also regulates air toxics. Most air toxics originate from human-made sources, including on-road mobile sources, non-road mobile sources (e.g., airplanes), area sources (e.g., dry cleaners), and stationary sources (e.g., factories or refineries).""" % (strProjectName))
     	
     	p = document.add_paragraph()
-    	p.add_run("""The purpose of this project is to %s. This project has been determined to generate minimal air quality impacts for CAA criteria pollutants and has not been linked with any special MSAT concerns. As such, this project will not result in changes in traffic volumes, vehicle mix, basic project location, or any other factor that would cause an increase in MSAT impacts of the project from that of the No-Build Alternative. It is therefore concluded the proposed action would have no meaningful potential MSAT impacts.""" % (strProjDesc))
+    	p.add_run("""The purpose of this project is to %s This project has been determined to generate minimal air quality impacts for CAA criteria pollutants and has not been linked with any special MSAT concerns. As such, this project will not result in changes in traffic volumes, vehicle mix, basic project location, or any other factor that would cause an increase in MSAT impacts of the project from that of the No-Build Alternative. It is therefore concluded the proposed action would have no meaningful potential MSAT impacts.""" % (strProjDesc))
     	
     	p = document.add_paragraph()
     	p.add_run("""Moreover, EPA regulations for vehicle engines and fuels will cause overall MSAT emissions to decline significantly over the next several decades. Based on regulations now in effect, an analysis of national trends with EPA's MOVES model forecasts a combined reduction of over 80 percent in the total annual emission rate for the priority MSAT from 2010 to 2050 while vehicle-miles of travel are projected to increase by over 100 percent. This will both reduce the background level of MSAT as well as the possibility of even minor MSAT emissions from this project.""")
