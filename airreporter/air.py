@@ -13,7 +13,8 @@ Change Ozone discussion to specify region
 #Specify template document for styles and word document with project description
 # Find and gather settings from the ini file
 
-localpath = r"C:\Users\bbatt\Dropbox\!Python\air-reporter\auxfiles"
+#localpath = r"C:\_Path_To_projectinfop_file"
+localpath = sys.argv[1]
 settingsFile = os.path.join(localpath, "projectinfo.ini")
 
 if os.path.isfile(settingsFile):
